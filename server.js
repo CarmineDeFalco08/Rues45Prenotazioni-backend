@@ -70,15 +70,18 @@ app.post('/api/prenota', async (req, res) => {
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap');
                 
+                html, body {
+                    margin: 0;
+                    padding: 0;
+                    background-color: #0d0d0d;
+                    -webkit-print-color-adjust: exact;
+                }
                 body {
                     font-family: 'Montserrat', sans-serif;
-                    margin: 0;
-                    padding: 20px;
-                    background-color: #0d0d0d;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    -webkit-print-color-adjust: exact;
+                    min-height: 100vh;
                 }
                 .ticket-container {
                     width: 400px;
@@ -88,7 +91,10 @@ app.post('/api/prenota', async (req, res) => {
                     overflow: hidden;
                     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
                     color: #ffffff;
-                    page-break-inside: avoid;
+                    /* Blocca categoricamente la divisione in più pagine */
+                    page-break-inside: avoid; 
+                    break-inside: avoid;
+                    margin: 20px auto;
                 }
                 .header {
                     background-color: #000000;
@@ -233,8 +239,8 @@ app.post('/api/prenota', async (req, res) => {
 
         const pdfBuffer = await page.pdf({
             width: '440px',
-            height: '780px',
             printBackground: true,
+            preferCSSPageSize: true, // Forziamo Puppeteer a seguire le regole CSS dell'HTML
             margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
         });
 

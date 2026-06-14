@@ -2,20 +2,44 @@ const express = require('express');
 const QRCode = require('qrcode');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
+const axios = require('axios'); // Libreria per inviare i dati a Telegram
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Abilita i moduli CORS (per far comunicare il Frontend su GitHub Pages con questo Server)
 app.use(cors());
-// Permette al server di leggere i dati in formato JSON inviati dal form
 app.use(express.json());
+
+// CONFIGURAZIONE TELEGRAM (Sostituisci con i tuoi dati reali)
+const TELEGRAM_TOKEN = '8646717687:AAEqjPVfijBIxdjUzIMdwwPhFtpUvfGRzI0';
+const TELEGRAM_CHAT_ID = '6045304177';
+
+// Funzione helper per inviare il messaggio a Telegram
+async function inviaNotificaTelegram(nome, cognome, telefono, data, persone) {
+    const messaggio = `🚨 *NUOVA PRENOTAZIONE RUES 45* 🚨\n\n` +
+                      `👤 *Cliente:* ${nome} ${cognome}\n` +
+                      `📞 *Telefono:* ${telefono}\n` +
+                      `📅 *Data e Ora:* ${data}\n` +
+                      `👥 *Coperti:* ${persone} Persone`;
+
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+
+    try {
+        await axios.post(url, {
+            chat_id: TELEGRAM_CHAT_ID,
+            text: messaggio,
+            parse_mode: 'Markdown'
+        });
+        console.log("Notifica Telegram inviata con successo!");
+    } catch (error) {
+        console.error("Errore invio notifica Telegram:", error.response ? error.response.data : error.message);
+    }
+}
 
 // Rotta principale per gestire la prenotazione
 app.post('/api/prenota', async (req, res) => {
     const { nome, cognome, telefono, dataOra, persone } = req.body;
 
-    // Formatta la data in modo leggibile
     const dataFormattata = new Date(dataOra).toLocaleString('it-IT', {
         day: '2-digit',
         month: '2-digit',
@@ -24,14 +48,16 @@ app.post('/api/prenota', async (req, res) => {
         minute: '2-digit'
     });
 
-    // 1. Stringa di dati che verrà inserita DENTRO il QR Code
-    const datiQR = `Prenotazione Ristorante\nCliente: ${nome} ${cognome}\nTel: ${telefono}\nData: ${dataFormattata}\nPersone: ${persone}`;
+    const datiQR = `Prenotazione Rues 45\nCliente: ${nome} ${cognome}\nTel: ${telefono}\nData: ${dataFormattata}\nPersone: ${persone}`;
 
     try {
+        // 1. Invia la notifica in tempo reale su Telegram
+        await inviaNotificaTelegram(nome, cognome, telefono, dataFormattata, persone);
+
         // 2. Genera il QR Code in formato Base64
         const qrCodeBase64 = await QRCode.toDataURL(datiQR);
 
-        // 3. Il Template HTML del biglietto aggiornato coordinato con il tuo index.html
+        // 3. Qui c'è l'HTML intero del biglietto (il QR Code si trova nella riga 136)
         const htmlTemplate = `
         <!DOCTYPE html>
         <html lang="it">
@@ -111,7 +137,6 @@ app.post('/api/prenota', async (req, res) => {
                     color: #dddddd;
                     line-height: 2;
                 }
-                /* Stile per le icone coordinate nel PDF */
                 .details-box i {
                     color: #d4af37;
                     margin-right: 8px;
@@ -193,20 +218,16 @@ app.post('/api/prenota', async (req, res) => {
         </html>
         `;
 
-        // 4. Avvia Puppeteer con flag di compatibilità per hosting Linux (es. Render)
+        // 4. Avvia Puppeteer per creare il PDF
         const browser = await puppeteer.launch({ 
             headless: "new",
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();
         
-        // Imposta l'HTML della pagina
         await page.setContent(htmlTemplate);
-        
-        // Forza l'attesa del caricamento dei web font (Montserrat) e delle icone prima di stampare il PDF
         await page.evaluateHandle('document.fonts.ready');
 
-        // Genera il PDF impostando dimensioni personalizzate prive di margini di stampa
         const pdfBuffer = await page.pdf({
             width: '440px',
             height: '780px',
@@ -216,7 +237,7 @@ app.post('/api/prenota', async (req, res) => {
 
         await browser.close();
 
-        // 5. Rispondi inviando il PDF al client
+        // 5. Invia il file PDF indietro al browser del cliente
         res.contentType("application/pdf");
         res.send(pdfBuffer);
 
@@ -226,7 +247,6 @@ app.post('/api/prenota', async (req, res) => {
     }
 });
 
-// Avvia il server in ascolto
 app.listen(PORT, () => {
     console.log(`Server attivo sulla porta ${PORT}`);
 });

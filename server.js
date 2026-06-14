@@ -70,18 +70,15 @@ app.post('/api/prenota', async (req, res) => {
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap');
                 
-                html, body {
-                    margin: 0;
-                    padding: 0;
-                    background-color: #0d0d0d;
-                    -webkit-print-color-adjust: exact;
-                }
                 body {
                     font-family: 'Montserrat', sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    background-color: #0d0d0d;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    min-height: 100vh;
+                    -webkit-print-color-adjust: exact;
                 }
                 .ticket-container {
                     width: 400px;
@@ -91,10 +88,7 @@ app.post('/api/prenota', async (req, res) => {
                     overflow: hidden;
                     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
                     color: #ffffff;
-                    /* Blocca categoricamente la divisione in più pagine */
-                    page-break-inside: avoid; 
-                    break-inside: avoid;
-                    margin: 20px auto;
+                    page-break-inside: avoid;
                 }
                 .header {
                     background-color: #000000;
@@ -233,14 +227,20 @@ app.post('/api/prenota', async (req, res) => {
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();
-        
+
         await page.setContent(htmlTemplate);
         await page.evaluateHandle('document.fonts.ready');
 
+        const { width, height } = await page.evaluate(() => ({
+            width: Math.ceil(document.documentElement.scrollWidth || document.body.scrollWidth || 400),
+            height: Math.ceil(document.documentElement.scrollHeight || document.body.scrollHeight || 800)
+        }));
+
         const pdfBuffer = await page.pdf({
-            width: '440px',
+            width: `${Math.max(width, 400)}px`,
+            height: `${Math.max(height, 800)}px`,
             printBackground: true,
-            preferCSSPageSize: true, // Forziamo Puppeteer a seguire le regole CSS dell'HTML
+            preferCSSPageSize: true,
             margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
         });
 

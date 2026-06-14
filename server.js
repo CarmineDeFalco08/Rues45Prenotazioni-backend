@@ -2,7 +2,7 @@ const express = require('express');
 const QRCode = require('qrcode');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
-const axios = require('axios'); // Libreria per inviare i dati a Telegram
+const axios = require('axios'); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// CONFIGURAZIONE TELEGRAM (Sostituisci con i tuoi dati reali)
+// CONFIGURAZIONE TELEGRAM
 const TELEGRAM_TOKEN = '8646717687:AAEqjPVfijBIxdjUzIMdwwPhFtpUvfGRzI0';
 const TELEGRAM_CHAT_ID = '6045304177';
 
@@ -51,13 +51,16 @@ app.post('/api/prenota', async (req, res) => {
     const datiQR = `Prenotazione Rues 45\nCliente: ${nome} ${cognome}\nTel: ${telefono}\nData: ${dataFormattata}\nPersone: ${persone}`;
 
     try {
-        // 1. Invia la notifica in tempo reale su Telegram
-        await inviaNotificaTelegram(nome, cognome, telefono, dataFormattata, persone);
+        // [MODIFICA CRITICA]: Rimosso l'await. La notifica parte in background.
+        // Se Telegram rallenta, il cliente riceve comunque il suo PDF senza errori.
+        inviaNotificaTelegram(nome, cognome, telefono, dataFormattata, persone).catch(err => {
+            console.error("Errore asincrono Telegram (non blocca il PDF):", err);
+        });
 
         // 2. Genera il QR Code in formato Base64
         const qrCodeBase64 = await QRCode.toDataURL(datiQR);
 
-        // 3. Qui c'è l'HTML intero del biglietto (il QR Code si trova nella riga 136)
+        // 3. Qui c'è l'HTML intero del biglietto
         const htmlTemplate = `
         <!DOCTYPE html>
         <html lang="it">

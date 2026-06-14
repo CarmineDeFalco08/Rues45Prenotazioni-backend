@@ -12,7 +12,7 @@ app.use(express.json());
 
 // CONFIGURAZIONE TELEGRAM
 const TELEGRAM_TOKEN = '8646717687:AAEqjPVfijBIxdjUzIMdwwPhFtpUvfGRzI0';
-const TELEGRAM_CHAT_ID = '6045304177';
+const TELEGRAM_CHAT_ID = '-5538020067';
 
 // Funzione helper per inviare il messaggio a Telegram
 async function inviaNotificaTelegram(nome, cognome, telefono, data, persone) {
@@ -224,7 +224,6 @@ app.post('/api/prenota', async (req, res) => {
         // 4. Avvia Puppeteer per creare il PDF
         const browser = await puppeteer.launch({ 
             headless: "new",
-            executablePath: '/opt/render/.cache/puppeteer/chrome/linux-149.0.7827.22/chrome-linux64/chrome', // <--- Specifica il percorso che ti ha dato l'errore
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();

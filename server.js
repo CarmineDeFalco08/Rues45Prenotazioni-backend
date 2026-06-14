@@ -258,7 +258,7 @@ app.post('/api/prenota', async (req, res) => {
 
     } catch (error) {
         console.error("Errore generazione PDF:", error);
-        res.status(500).send("Errore del server durante la generazione del biglietto.");
+        res.status(500).send("Errore del server durante la generazione della prenotazione.");
     }
 });
 

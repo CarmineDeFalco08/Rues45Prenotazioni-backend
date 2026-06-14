@@ -224,13 +224,7 @@ app.post('/api/prenota', async (req, res) => {
         // 4. Avvia Puppeteer per creare il PDF
         const browser = await puppeteer.launch({ 
             headless: "new",
-            executablePath: '/usr/bin/chromium-browser', // <--- Usa il browser di sistema Linux
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu'
-            ]
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         const page = await browser.newPage();
         
